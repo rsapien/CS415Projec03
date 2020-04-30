@@ -1,13 +1,19 @@
 import os
 import sys
 
-def dynamic(capacity, weights, values):
+def TDP(capacity, weights, values, n):
+    if n == 0 or capacity == 0:
+        return 0
 
-    return
+    if (weights[n - 1] > capacity):
+        return TDP(capacity, weights, values, n - 1)
+
+    else:
+        return max(values[n - 1] + TDP(capacity - weights[n - 1], weights, values, n - 1),
+                   TDP(capacity, weights, values, n - 1))
 
 def main():
     args = sys.argv
-    #print(len(args))
     if len(args) != 3:
         print("Invalid number of arguments. Exiting...")
         return
@@ -27,34 +33,36 @@ def main():
         elif vFileName == file:
             fileList.append(file)
 
-    c = []
+    c = 0
     w = []
     v = []
 
     for file in fileList:
         FDir = dir + '/' + file
-        #print(FDir, type(FDir))
         F = open(FDir, 'r')
 
         if file[4] == 'c':
-            c = F.read().splitlines()
+            f = F.read().splitlines()
+            c = int(f[0])
             F.close()
 
         elif file[4] == 'w':
             w = F.read().splitlines()
             F.close()
             for i in range(len(w)):
-                w[i] = w[i].strip(" ")
+                w[i] = int(w[i].strip(" "))
 
         elif file[4] == 'v':
             v = F.read().splitlines()
             for i in range(len(v)):
-                v[i] = v[i].strip(" ")
+                v[i] = int(v[i].strip(" "))
             F.close()
 
     print("File containing the capacity, weights, and values are: ", end=" ")
     print(cFileName, wFileName, "", sep=", ", end=" "); print(vFileName)
 
-    print("Knapsack capacity = {0}. Total number of items = {1}".format(c[0], len(w)))
+    print("Knapsack capacity = {0}. Total number of items = {1}".format(c, len(w)))
+
+    print('Traditional Dynamic Programming Optimal value:', TDP(c, w, v, len(w)))
 
 main()
