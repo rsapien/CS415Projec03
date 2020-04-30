@@ -2,4 +2,7 @@
 by: Robert Sapien & Vince Bjazevic
 
 **Run in Command Line:**
+
     `python3 <directory path> <file number>`
+
+    - if '<file number> < 9' please add a 0 before it
