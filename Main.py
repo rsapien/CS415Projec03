@@ -1,16 +1,53 @@
 import os
 import sys
+import time
 
+# Traditional(Bottom Up) Approach
 def TDP(capacity, weights, values, n):
-    if n == 0 or capacity == 0:
-        return 0
+    # start time
+    start = time.time()
+    # creates (capacity + 1)x(# of weights or values) table
+    table = [[0 for w in range(capacity + 1)] for i in range(n + 1)]
 
-    if (weights[n - 1] > capacity):
-        return TDP(capacity, weights, values, n - 1)
+    # adds values to Knapsack table
+    for i in range(n + 1):
+        for w in range(capacity + 1):
+            if i == 0 or w == 0:
+                table[i][w] = 0
+            elif weights[i - 1] <= w:
+                table[i][w] = max(values[i - 1] + table[i - 1][w - weights[i - 1]],
+                                  table[i - 1][w])
+            else:
+                table[i][w] = table[i - 1][w]
 
-    else:
-        return max(values[n - 1] + TDP(capacity - weights[n - 1], weights, values, n - 1),
-                   TDP(capacity, weights, values, n - 1))
+    # end time
+    end = time.time() - start
+
+    # stores the result of Knapsack table
+    res = table[n][capacity]
+    print('Traditional Dynamic Programming Optimal value:', res)
+
+    w = capacity
+    opt_values = []
+    for i in range(n, 0, -1):
+        if res <= 0:
+            break
+        if res == table[i - 1][w]:
+            continue
+        else:
+            # optimal item indexes
+            # print('w:', weights[i - 1], 'v:', values[i - 1])
+            opt_values.append(i)
+
+            # Since this weight is included
+            # its value is deducted
+            res = res - values[i - 1]
+            w = w - weights[i - 1]
+
+    opt_values.reverse()
+    print('Traditional Dynamic Programming Optimal subset: ',
+          '{', ', '.join(str(x) for x in opt_values), '}', sep="")
+    print('Traditional Dynamic Programming Time Taken:', end, end='\n\n')
 
 def main():
     args = sys.argv
@@ -37,6 +74,7 @@ def main():
     w = []
     v = []
 
+
     for file in fileList:
         FDir = dir + '/' + file
         F = open(FDir, 'r')
@@ -59,10 +97,9 @@ def main():
             F.close()
 
     print("File containing the capacity, weights, and values are: ", end=" ")
-    print(cFileName, wFileName, "", sep=", ", end=" "); print(vFileName)
-
+    print(cFileName, wFileName, "", sep=", ", end=vFileName); print('\n')
     print("Knapsack capacity = {0}. Total number of items = {1}".format(c, len(w)))
 
-    print('Traditional Dynamic Programming Optimal value:', TDP(c, w, v, len(w)))
+    TDP(c,w, v, len(w))
 
 main()
