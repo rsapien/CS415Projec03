@@ -1,6 +1,106 @@
 import os
 import sys
 import time
+import math
+
+class BinHash:
+    def __init__(self, c, w, v, n):
+        self.cap = c
+        self.w8s = w
+        self.vals = v
+        self.size = n
+        self.k = int(math.pow(2, n-4))
+        self.bn = int(math.ceil(math.log2(n+1)))
+        self.bw = int(math.ceil(math.log2(c+1)))
+
+        self.hashTable = [[] for i in range(self.k)]
+        self.htSize = 0
+        self.opt_values = []
+        self.v_w = []
+        for i in range(len(w)):
+            self.v_w.append((self.vals[i], self.w8s[i]))
+
+    def print(self):
+        start = time.time()
+        self.hash(self.size, self.cap)
+        print("hash finished")
+        self.getOPT_values(self.size, self.cap)
+        print("opt_values finished")
+        self.opt_values.reverse()
+        t = time.time() - start
+
+        print('Space-efficient Dynamic Programming Optimal Value:', )
+        print('Traditional Dynamic Programming Optimal subset: ',
+              '{', ', '.join(str(x) for x in self.opt_values), '}', sep="")
+        print('Space-efficient Dynamic Programming Time Taken:', t)
+        print('Space-efficient Dynamic Programming Space Taken:', self.k, end='\n\n')
+
+
+    def h(self, i, j):
+        ri = format(i, "b")
+        rj = format(j, "b")
+
+        while len(ri) < self.bn:
+            ri = "0" + ri
+        while len(rj) < self.bw:
+            rj = "0" + rj
+
+        rij = "0b" + "1" + ri + rj
+        b2dec = int(rij, 2)
+
+        return b2dec
+
+    def insert(self, i, j, num):
+        n = self.h(i, j)
+        idx = n % self.k
+        item = (num, n)
+        self.hashTable[idx].append(item)
+        self.htSize += 1
+
+    def find(self, i, j):
+        num = self.h(i, j)
+        idx = num % self.k
+
+        n = -1
+        for i in self.hashTable[idx]:
+            if i[1] == num:
+                return i[0]
+        return n
+
+    def hash(self, i, j):
+        if i == 0 or j == 0:
+            return 0
+        if self.find(i, j) == -1:
+            v = self.v_w[i - 1][0]
+            w = self.v_w[i - 1][1]
+            if j < w:
+                n = self.hash(i - 1, j)
+            else:
+                n = max(self.hash(i - 1, j), v + self.hash(i - 1, j - w))
+            self.insert(i, j, n)
+
+        return self.find(i, j)
+
+    # Space-Efficient Dynamic Approach
+    def getOPT_values(self, i, j):
+        if i == 0 or j == 0: return 0
+        v = self.v_w[i-1][0]
+        w = self.v_w[i - 1][1]
+        if j - w >= 0:
+            n = v + self.find(i - 1, j - w)
+            f = self.find(i - 1, j)
+            if n > f and j - w >= 0:
+                self.opt_values.append(i)
+                return self.getOPT_values(i - 1, j - w)
+
+        return self.getOPT_values(i - 1, j)
+
+    def getOPT_Val(self):
+        num = self.h(self.size, self.cap)
+        idx = num % self.k
+        for i in self.hashTable[idx]:
+            if i[1] == num:
+                return i[0]
 
 # Traditional(Bottom Up) Approach
 def TDP(capacity, weights, values, n):
@@ -36,7 +136,6 @@ def TDP(capacity, weights, values, n):
             continue
         else:
             # optimal item indexes
-            # print('w:', weights[i - 1], 'v:', values[i - 1])
             opt_values.append(i)
 
             # Since this weight is included
@@ -45,6 +144,8 @@ def TDP(capacity, weights, values, n):
             w = w - weights[i - 1]
 
     opt_values.reverse()
+
+    # prints optimal values and algorithm time
     print('Traditional Dynamic Programming Optimal subset: ',
           '{', ', '.join(str(x) for x in opt_values), '}', sep="")
     print('Traditional Dynamic Programming Time Taken:', end, end='\n\n')
@@ -97,9 +198,12 @@ def main():
             F.close()
 
     print("File containing the capacity, weights, and values are: ", end=" ")
-    print(cFileName, wFileName, "", sep=", ", end=vFileName); print('\n')
-    print("Knapsack capacity = {0}. Total number of items = {1}".format(c, len(w)))
+    print(cFileName, wFileName, "", sep=", ", end=vFileName + '\n\n')
+    print("Knapsack capacity = {0}. Total number of items = {1}".format(c, len(w)), end='\n\n')
 
-    TDP(c,w, v, len(w))
+    TDP(c, w, v, len(w))
+    BH = BinHash(c, w, v, len(w))
+    BH.print()
+
 
 main()
