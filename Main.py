@@ -1,13 +1,13 @@
 import os
 import sys
-import time
+import time as tm
 import math
 
 class BinHash:
     def __init__(self, c, w, v, n):
-        self.cap = c
-        self.w8s = w
-        self.vals = v
+        self.capacity = c
+        self.weights = w
+        self.values = v
         self.size = n
         self.k = int(math.pow(2, n-4))
         self.bn = int(math.ceil(math.log2(n+1)))
@@ -18,23 +18,22 @@ class BinHash:
         self.opt_values = []
         self.v_w = []
         for i in range(len(w)):
-            self.v_w.append((self.vals[i], self.w8s[i]))
+            self.v_w.append((self.values[i], self.weights[i]))
 
     def print(self):
-        start = time.time()
-        self.hash(self.size, self.cap)
+        start = tm.time()
+        self.hash(self.size, self.capacity)
         print("hash finished")
-        self.getOPT_values(self.size, self.cap)
+        self.getOPT_values(self.size, self.capacity)
         print("opt_values finished")
         self.opt_values.reverse()
-        t = time.time() - start
+        t = tm.time() - start
 
         print('Space-efficient Dynamic Programming Optimal Value:', )
         print('Traditional Dynamic Programming Optimal subset: ',
               '{', ', '.join(str(x) for x in self.opt_values), '}', sep="")
         print('Space-efficient Dynamic Programming Time Taken:', t)
         print('Space-efficient Dynamic Programming Space Taken:', self.k, end='\n\n')
-
 
     def h(self, i, j):
         ri = format(i, "b")
@@ -96,7 +95,7 @@ class BinHash:
         return self.getOPT_values(i - 1, j)
 
     def getOPT_Val(self):
-        num = self.h(self.size, self.cap)
+        num = self.h(self.size, self.capacity)
         idx = num % self.k
         for i in self.hashTable[idx]:
             if i[1] == num:
@@ -105,7 +104,7 @@ class BinHash:
 # Traditional(Bottom Up) Approach
 def TDP(capacity, weights, values, n):
     # start time
-    start = time.time()
+    start = tm.time()
     # creates (capacity + 1)x(# of weights or values) table
     table = [[0 for w in range(capacity + 1)] for i in range(n + 1)]
 
@@ -121,7 +120,7 @@ def TDP(capacity, weights, values, n):
                 table[i][w] = table[i - 1][w]
 
     # end time
-    end = time.time() - start
+    end = tm.time() - start
 
     # stores the result of Knapsack table
     res = table[n][capacity]
@@ -150,6 +149,126 @@ def TDP(capacity, weights, values, n):
           '{', ', '.join(str(x) for x in opt_values), '}', sep="")
     print('Traditional Dynamic Programming Time Taken:', end, end='\n\n')
 
+operations = 0
+heap = []
+n = 0
+
+def greedy_sort(list):
+    if len(list) == 1:
+        return list
+    return helper_sort(greedy_sort(list[len(list) // 2:]),
+                       greedy_sort(list[:len(list) // 2]))
+
+def helper_sort(right, left):
+    global operations
+    temp = []
+    left_count = 0
+    right_count = 0
+    while right_count < len(right) and left_count < len(left):
+        if right[right_count] < left[left_count]:
+            temp.append(left[left_count])
+            left_count += 1
+        else:
+            temp.append(right[right_count])
+            right_count += 1
+        operations += 1
+    if right_count == len(right):
+        temp += left[left_count:]
+    if left_count == len(left):
+        temp += right[right_count:]
+    return temp
+
+def greedy_optimal(ratios, weights, capacity, values):
+    global operations
+    subset = []
+    sorted_array = greedy_sort(ratios)
+    counter = 0
+    current = 0
+    optimal_value = 0
+
+    while current + weights[ratios.index(sorted_array[counter])] < capacity:
+        index = ratios.index(sorted_array[counter])
+        current += weights[index]
+        optimal_value += values[index]
+        subset.append(index+ 1)
+        counter += 1
+    subset.sort()
+    print()
+    print("Greedy Approach Optimal Value:", optimal_value)
+    print('Greedy Approach Optimal subset: ',
+          '{', ', '.join(str(x) for x in subset), '}', sep="")
+    print("Greedy Approach Number of Operations: ", operations)
+    operations = 0
+
+def heap_create():
+    global heap
+    global n
+    if n <= 1:
+        return
+    rmp = n//2
+    while rmp >0:
+        sift(rmp)
+        rmp -= 1
+
+def heap_swap(a, b):
+    global operations
+    global heap
+    operations += 1
+    if heap[a] < heap[b]:
+        heap[a], heap[b] = heap[b], heap[a]
+
+def remove_top():
+    global n
+    global heap
+    if n == 0:
+        return -1
+    m = heap[1]
+    heap[1], heap[n] = heap[n], heap[1]
+    n -= 1
+    sift(1)
+    return m
+
+def sift(num):
+    global n
+    global heap
+    global operations
+    while num <= n // 2:
+        if num * 2 + 1 > n:
+            heap_swap(num, num * 2)
+            return
+        elif heap[num * 2] >= heap[num * 2 + 1]:
+            heap_swap(num, num * 2)
+            num = num * 2
+        else:
+            heap_swap(num, num * 2 + 1)
+            num = num * 2 + 1
+        operations += 1
+
+def heap_optimal(ratios, weight, capacity, values):
+    global operations
+    global heap
+    global n
+    heap = [*[-1], *ratios]
+    n = len(heap) - 1
+    subset = []
+    optimal_value = 0
+    heap_create()
+    current = 0
+    index = ratios.index(remove_top())
+
+    while index != -1 and current + weight[index] < capacity:
+        current += weight[index]
+        optimal_value += values[index]
+        subset.append(index + 1)
+        index = ratios.index(remove_top())
+    subset.sort()
+    print()
+    print("Heap-Based Greedy Approach Optimal Value:", optimal_value)
+    print('Heap-Based Greedy Approach Optimal subset: ',
+          '{', ', '.join(str(x) for x in subset), '}', sep="")
+    print("Heap-Based Greedy Approach Number of Operations: ", operations)
+    operations = 0
+
 def main():
     args = sys.argv
     if len(args) != 3:
@@ -158,6 +277,8 @@ def main():
 
     dir = args[1]
     num = args[2]
+    if len(num) == 1:
+        num = '0' + num
     files = os.listdir(dir)
     cFileName = "p" + num + "_c.txt"
     wFileName = "p" + num + "_w.txt"
@@ -174,7 +295,6 @@ def main():
     c = 0
     w = []
     v = []
-
 
     for file in fileList:
         FDir = dir + '/' + file
@@ -197,6 +317,8 @@ def main():
                 v[i] = int(v[i].strip(" "))
             F.close()
 
+    ratios = list(map(lambda x, y: x / y, v, w))
+
     print("File containing the capacity, weights, and values are: ", end=" ")
     print(cFileName, wFileName, "", sep=", ", end=vFileName + '\n\n')
     print("Knapsack capacity = {0}. Total number of items = {1}".format(c, len(w)), end='\n\n')
@@ -204,6 +326,9 @@ def main():
     TDP(c, w, v, len(w))
     BH = BinHash(c, w, v, len(w))
     BH.print()
+
+    greedy_optimal(ratios, w, c, v)
+    heap_optimal(ratios, w, c, v)
 
 
 main()
