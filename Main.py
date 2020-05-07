@@ -252,13 +252,13 @@ def heap_optimal(ratios, weight, capacity, values):
     optimal_value = 0
     heap_create()
     current = 0
-    index = ratios.index(remove_top())
+    reference = ratios.index(remove_top())
 
-    while index != -1 and current + weight[index] < capacity:
-        current += weight[index]
-        optimal_value += values[index]
-        subset.append(index + 1)
-        index = ratios.index(remove_top())
+    while reference != -1 and current + weight[reference] < capacity:
+        current += weight[reference]
+        optimal_value += values[reference]
+        subset.append(reference + 1)
+        reference = ratios.index(remove_top())
     subset.sort()
     print()
     print("Heap-Based Greedy Approach Optimal Value:", optimal_value)
