@@ -23,9 +23,7 @@ class BinHash:
     def print(self):
         start = tm.time()
         self.hash(self.size, self.capacity)
-        print("hash finished")
         self.getOPT_values(self.size, self.capacity)
-        print("opt_values finished")
         self.opt_values.reverse()
         t = tm.time() - start
 
